@@ -12,7 +12,9 @@ namespace Sky.FlySign
        
         static void Main(string[] args)
         {           
-            var run=new Run();
+            new Run();
+            Console.Title = "Fly社区自动签到!";
+            Console.WriteLine("starting...");
             Console.ReadKey();
         }
 
@@ -34,7 +36,7 @@ namespace Sky.FlySign
             //DateTimeOffset runTime = DateBuilder.EvenMinuteDate(DateTimeOffset.UtcNow);
             ITrigger trigger = TriggerBuilder.Create()
                 .WithIdentity("trigger1", "group1")
-                .WithCronSchedule("0 0 0 * * ?")     //凌晨12点触发 0 0 0 * * ? 0/5 * * * * ?
+                .WithCronSchedule("59 59 23 * * ?")     //凌晨23:59:59触发 0 0 0 * * ? 0/5 * * * * ?
                                                        //.StartAt(runTime)
                 .Build();
 

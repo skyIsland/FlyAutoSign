@@ -64,7 +64,7 @@ namespace Sky.FlySign.Core
         /// </summary>
         private Dictionary<string, Cookie> _cookiesDic = new Dictionary<string, Cookie>();
 
-        private string _logPath = @"..\";
+        private string _logPath = @"\Log";
         #endregion
 
         #region 构造函数

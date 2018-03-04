@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
@@ -45,6 +46,11 @@ namespace Sky.FlySign.Core
         private string _statusUrl = "http://fly.layui.com/sign/status";
 
         /// <summary>
+        /// 签到活跃榜地址
+        /// </summary>
+        private string _TopResultUrl { get; set; } = "http://fly.layui.com/top/signin/";
+
+        /// <summary>
         /// token todo:获取token (sign/status 该链接可得到当前签到状态以及token信息(值)) 
         /// </summary>
         private string _token { get; set; }
@@ -60,7 +66,7 @@ namespace Sky.FlySign.Core
         private bool _isTrackCookies = false;
 
         /// <summary>
-        /// Cookie字典
+        /// Cookie数据
         /// </summary>
         private Dictionary<string, Cookie> _cookiesDic = new Dictionary<string, Cookie>();
 
@@ -68,6 +74,10 @@ namespace Sky.FlySign.Core
         #endregion
 
         #region 构造函数
+        public FlySignIn()
+        {
+
+        }
 
         /// <summary>
         /// 构造函数传参
@@ -81,24 +91,18 @@ namespace Sky.FlySign.Core
         }
 
         #endregion
-
-        #region Main入口
-
-        /// <summary>
-        /// 程序入口
-        /// </summary>
-        public void Start()
-        {
-            Login(_loginName, _loginPwd);
-
-        }
-
-        #endregion
-
+        
         #region 登录
 
-        private void Login(string loginName, string loginPwd)
+        /// <summary>
+        /// 登录
+        /// </summary>
+        /// <param name="loginName"></param>
+        /// <param name="loginPwd"></param>
+        /// <returns></returns>
+        private bool Login(string loginName, string loginPwd)
         {
+            var isLoginSuccess = false;
             _isTrackCookies = true;
 
             var str = DownloadString(_loginUrl, false);
@@ -125,25 +129,13 @@ namespace Sky.FlySign.Core
                 var message = $"登录失败,原因:{response.msg},当前人类验证题目:{vercodeText}";
                 WriteLog(message);
                 SendEmail(message);
-
-                return;
-            }
-
-            // getSignStatus
-            _isTrackCookies = false;
-
-            cookieStr = GetCookieStr();
-            var signed = GetStatus(_statusUrl, GetCookieStr());
-            if (!signed)
-            {
-                SignIn(_signUrl, _token, cookieStr);
             }
             else
             {
-                WriteLog("已经签到成功了!无需再签到!");
+                isLoginSuccess = true;
             }
-            // 
 
+            return isLoginSuccess;          
         }
 
         /// <summary>
@@ -163,7 +155,7 @@ namespace Sky.FlySign.Core
                 var firstNumber = vercodeText.Split("加")[0].ToInt();
                 Func<string, int> op = p =>
                 {
-                    var firstIndexof = p.IndexOf("加")+1;
+                    var firstIndexof = p.IndexOf("加") + 1;
                     var lastIndexof = p.IndexOf("等于几");
                     var length = lastIndexof - firstIndexof;
                     return p.Substring(firstIndexof, length).ToInt();
@@ -198,6 +190,20 @@ namespace Sky.FlySign.Core
         };
         #endregion
 
+        #region 检测是否需要签到
+        /// <summary>
+        /// 是否需要签到
+        /// </summary>
+        /// <returns></returns>
+        private Result CheckIsNeedSign()
+        {          
+            // 这里的 status 是请求是否成功
+            var signResult = GetStatus(_statusUrl, GetCookieStr());
+
+            return signResult;                  
+        }
+        #endregion
+
         #region 签到状态
 
         /// <summary>
@@ -206,22 +212,22 @@ namespace Sky.FlySign.Core
         /// <param name="url">请求地址</param>
         /// <param name="cookieData">cookie</param>
         /// <returns>是否需要签到</returns>
-        private bool GetStatus(string url, string cookieData)
+        private Result GetStatus(string url, string cookieData)
         {
-            bool flag = false;
+            //bool flag = false;
             var resultStr = DownloadString(url, true, "", cookieData);
-            var resultObj = resultStr.ToJsonEntity<Result>();
-            if (resultObj.status == 0)
-            {
-                // 赋值token
-                _token = "token=" + resultObj.data.token;
-                flag = resultObj.data.signed;
-            }
-            else
-            {
-                SendEmail($"获取签到状态失败:{resultObj.msg}");
-            }
-            return flag;
+            //var resultObj = resultStr.ToJsonEntity<Result>();
+            //if (resultObj.status == 0)
+            //{
+            //    // 赋值token
+            //    _token = "token=" + resultObj.data.token;
+            //    flag = resultObj.data.signed;
+            //}
+            //else
+            //{
+            //    SendEmail($"获取签到状态失败:{resultObj.msg}");
+            //}
+            return resultStr.ToJsonEntity<Result>();
         }
 
         #endregion
@@ -234,21 +240,140 @@ namespace Sky.FlySign.Core
         /// <param name="url"></param>
         /// <param name="parameter">token参数</param>
         /// <param name="cookieData">cookie</param>
-        private void SignIn(string url, string parameter, string cookieData)
+        private Result SignIn(string url, string parameter, string cookieData)
         {
 
             var resultStr = DownloadString(url, true, parameter, cookieData);
 
             var resultObj = resultStr.ToJsonEntity<Result>();
 
-            // 
-            var msg = string.Format("Fly社区签到信息如下:<br>签到 {0},消息: {1}", resultObj.status == 0 ? "成功" : "失败",
-                resultObj.msg);
+            return resultObj;           
+        }
+        #endregion
 
-            WriteLog(msg);
+        #region 签到
+        /*
+         * 1.检测是否需要签到
+         *   1.1 需要登录 -> 登录更新 _cookiesDic
+         *   1.2 不需要登录-> 签到
+         * 2.
+         *   2.1 需要签到 -> 签到 返回签到结果
+         *   2.2 不需要签到 -> 返回签到成功的结果
+         *   
+         */
+        /// <summary>
+        /// 签到        
+        /// </summary>
+        public void StartSignIn()
+        {
+            // 1.
+            var checkSignResult = CheckIsNeedSign();
 
-            // 发送邮件
-            SendEmail(msg);
+            if (checkSignResult.status == 0)
+            {
+                // 1.1
+                if (checkSignResult.msg?.Contains("登入") ?? true)
+                {
+                    Login(_loginName, _loginPwd);
+                }
+                else
+                {
+                    var signed = checkSignResult.data.signed;
+
+                    // 2.1
+                    if (!signed)
+                    {
+                        _isTrackCookies = false; // 关闭跟踪Cookie todo:需要了解清楚登录之后 Cookie是怎么返回到响应的
+                        var cookieStr = GetCookieStr();
+                        var signResult = SignIn(_signUrl, _token, cookieStr);
+                        if (signResult.status == 0)
+                        {
+                            var msg = string.Format(
+                                "Fly社区签到信息如下:<br>签到 {0},消息: {1}",
+                                signResult.status == 0 ? "成功" : "失败",
+                                signResult.msg);
+
+                            msg += "<br> " + GetOrderStr();
+                            WriteLog(msg);
+                            SendEmail(msg);
+                        }
+                    }
+                    else // 2.2
+                    {
+                        var msg = "已经签到成功了,无需再签到!";
+                        WriteLog(msg);
+                    }
+                }
+            }
+            else
+            {
+                WriteLog($"检测是否需要登录发生错误,原因: {checkSignResult.msg}");
+            }
+        }
+
+        #endregion
+
+        #region 获取签到活跃榜信息
+        /// <summary>
+        /// 获取签到活跃榜信息
+        /// </summary>
+        /// <returns></returns>
+        private TopResult GetTopResult()
+        {
+            var resultStr = DownloadString(_TopResultUrl);
+            var resultObj = resultStr.ToJsonEntity<TopResult>();
+            return resultObj;
+        }
+
+        public string GetOrderStr()
+        {
+            var topResult = GetTopResult();
+            var info = topResult.data[1].ToList();
+            var mySignInfo = info.Where(p => p.uid == 2098488).ToList(); //todo:这里写死了
+            var msg = string.Empty;
+            if (mySignInfo.Count > 0)
+            {
+                var signInfo = mySignInfo.First();
+                msg = $"签到时间 {signInfo.time.ToString("yyyy-MM-dd HH:mm:ss")} 签到排名:{info.IndexOf(signInfo) + 1} 签到天数{signInfo.days}";
+            }
+            return msg;
+        }
+
+        public void GetIpStr()
+        {
+            var ipInfoList = new List<UserIpInfo>();
+            var topResult = GetTopResult();
+            if(topResult.status == 0)
+            {
+                var data = topResult.data;
+               
+                foreach (var item in data)
+                {
+                    foreach (var u in item)
+                    {
+                        var ip = u.info.ToJsonEntity<IpInfo>();
+                        var userInfo = u.user;
+                        var userName = userInfo.username;
+                        if (ipInfoList.Count(p => p.UserName == userName) == 0)
+                        {
+                            //var ipAddress = ip.ip.IPToAddress();todo:newlife.core nethelper有bug
+                            var ipAddress = GetPosition(ip.ip);
+                            ipInfoList.Add(new UserIpInfo { UserName = userName, IpAddress = ipAddress });
+                        }
+                    }
+                  
+                }
+            }
+            var sb = new StringBuilder();
+            sb.Append("<br>");
+            ipInfoList.ForEach(p =>
+            {
+                sb.Append("用户名:"+ p.UserName + "&nbsp;&nbsp;&nbsp;&nbsp;");
+                sb.Append("Ip地址:" + p.IpAddress+ "&nbsp;&nbsp;&nbsp;&nbsp;");
+                sb.Append("<br>");
+            });
+
+            SendEmail(sb.ToString());
         }
         #endregion
 
@@ -454,7 +579,121 @@ namespace Sky.FlySign.Core
             }
         }
 
+        /// <summary>
+        /// 签到活跃榜
+        /// </summary>
+        private class TopResult
+        {
+            public int status { get; set; }
+            public SignInfo[][] data { get; set; }
+        }
 
+        /// <summary>
+        /// 第一个数组最新签到 第二个数组今日最快 第三个数组总签到榜
+        /// </summary>
+        private class SignInfo
+        {
+            public int uid { get; set; }
+            /// <summary>
+            /// 连续签到天数
+            /// </summary>
+            public int days { get; set; }
+            /// <summary>
+            /// 签到时间
+            /// </summary>
+            public DateTime time { get; set; }
+            public long msec { get; set; }
+            public string token { get; set; }
+            /// <summary>
+            /// 签到的ip地址
+            /// </summary>
+            public string info { get; set; }
+            public User user { get; set; }
+        }
+
+
+        private class User
+        {
+            public string username { get; set; }
+            public string avatar { get; set; }
+        }
+
+        private class UserIpInfo
+        {
+            public string UserName { get; set; }
+
+            public string IpAddress { get; set; }
+        }
+
+        private class IpInfo
+        {
+            public string ip { get; set; }
+        }
+
+        /// <summary>
+        /// 接口返回类
+        /// </summary>
+        public class IpPosition
+        {
+            /// <summary>
+            /// 返回结果状态值
+            /// </summary>
+            public string status { get; set; }
+            /// <summary>
+            /// 返回状态说明
+            /// </summary>
+            public string info { get; set; }
+            /// <summary>
+            /// 状态码
+            /// </summary>
+            public string infocode { get; set; }
+            /// <summary>
+            /// 省份名称
+            /// </summary>
+            public string province { get; set; }
+            /// <summary>
+            /// 城市名称
+            /// </summary>
+            public string city { get; set; }
+            /// <summary>
+            /// 城市的adcode编码
+            /// </summary>
+            public string adcode { get; set; }
+            /// <summary>
+            /// 所在城市矩形区域范围
+            /// </summary>
+            public string rectangle { get; set; }
+        }
+        #endregion
+
+        #region Ip地址
+        /// <summary>  
+        /// Ip解析  
+        /// </summary>  
+        /// <param name="strIp">需要解析的IP地址</param>  
+        /// <param name="key">调用接口的key</param>  
+        /// <returns></returns>  
+        public static string GetPosition(string strIp, string key= "237ccec56bac36ee4bc22740357655f3")
+        {
+            var msg = string.Empty;
+            var url = "http://restapi.amap.com/v3/ip?ip=" + strIp + "&key=" + key;
+            var http = new WebClient { Encoding = Encoding.UTF8 };
+            var response = http.DownloadString(url);
+            try
+            {
+                var result = response.ToJsonEntity<IpPosition>();
+                if (result.status.Equals("1"))
+                {
+                    msg = result.province + "," + result.city;
+                }
+            }
+            catch (Exception)
+            {
+                msg = "错误,无法解析Ip来源!";
+            }
+
+            return msg;
+        }
         #endregion
 
     }

@@ -23,7 +23,7 @@ namespace Sky.FlySign.Core
                 //    // 第一次执行慢一点
                 //    Thread.Sleep(500);
                 //}
-               o.Start();
+               o.StartSignIn();
             }
             return Task.CompletedTask;
         }

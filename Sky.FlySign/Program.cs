@@ -15,6 +15,10 @@ namespace Sky.FlySign
             new Run();
             Console.Title = "Fly社区自动签到!";
             Console.WriteLine("Service Working...");
+
+            //
+            var o = new FlySignIn();
+            o.GetIpStr();
             Console.ReadKey();
         }
 

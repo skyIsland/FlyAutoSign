@@ -12,13 +12,18 @@ namespace Sky.FlySign
        
         static void Main(string[] args)
         {           
-            new Run();
+            //new Run();
             Console.Title = "Fly社区自动签到!";
             Console.WriteLine("Service Working...");
 
             //
-            var o = new FlySignIn();
-            o.GetIpStr();
+            // var o = new FlySignIn();
+            //o.GetIpStr();
+
+
+            var info = ConfigHelper.GetBasicConfig().FlyCfg;
+            var o = new FlySignIn(info.Email, info.Pwd);
+            o.StartSignIn();
             Console.ReadKey();
         }
 
@@ -40,8 +45,8 @@ namespace Sky.FlySign
             //DateTimeOffset runTime = DateBuilder.EvenMinuteDate(DateTimeOffset.UtcNow);
             ITrigger trigger = TriggerBuilder.Create()
                 .WithIdentity("trigger1", "group1")
-                .WithCronSchedule("58 59 23 * * ?")     //凌晨23:59:59触发 0 0 0 * * ? 0/5 * * * * ?
-                                                       //.StartAt(runTime)
+                .WithCronSchedule("58 59 23 * * ?")     //凌晨23:59:58触发 58 59 23 * * ? 0/5 * * * * ?
+                                                        //.StartAt(runTime)
                 .Build();
 
             // 将任务与触发器添加到调度器中

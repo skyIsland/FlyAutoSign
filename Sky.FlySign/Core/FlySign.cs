@@ -91,7 +91,7 @@ namespace Sky.FlySign.Core
         }
 
         #endregion
-        
+
         #region 登录
 
         /// <summary>
@@ -135,7 +135,7 @@ namespace Sky.FlySign.Core
                 isLoginSuccess = true;
             }
 
-            return isLoginSuccess;          
+            return isLoginSuccess;
         }
 
         /// <summary>
@@ -196,11 +196,11 @@ namespace Sky.FlySign.Core
         /// </summary>
         /// <returns></returns>
         private Result CheckIsNeedSign()
-        {          
+        {
             // 这里的 status 是请求是否成功
             var signResult = GetStatus(_statusUrl, GetCookieStr());
 
-            return signResult;                  
+            return signResult;
         }
         #endregion
 
@@ -247,7 +247,7 @@ namespace Sky.FlySign.Core
 
             var resultObj = resultStr.ToJsonEntity<Result>();
 
-            return resultObj;           
+            return resultObj;
         }
         #endregion
 
@@ -274,36 +274,38 @@ namespace Sky.FlySign.Core
                 // 1.1
                 if (checkSignResult.msg?.Contains("登入") ?? true)
                 {
-                    Login(_loginName, _loginPwd);
+                    var loginResult = Login(_loginName, _loginPwd);
+                    if (loginResult)
+                    {
+                        checkSignResult = CheckIsNeedSign();
+                    }
                 }
-                else
+
+                var signed = checkSignResult.data.signed;
+
+                // 2.1
+                if (!signed)
                 {
-                    var signed = checkSignResult.data.signed;
+                    _isTrackCookies = false; // 关闭跟踪Cookie todo:需要了解清楚登录之后 Cookie是怎么返回到响应的
+                    var cookieStr = GetCookieStr();
+                    var signResult = SignIn(_signUrl, _token, cookieStr);
 
-                    // 2.1
-                    if (!signed)
-                    {
-                        _isTrackCookies = false; // 关闭跟踪Cookie todo:需要了解清楚登录之后 Cookie是怎么返回到响应的
-                        var cookieStr = GetCookieStr();
-                        var signResult = SignIn(_signUrl, _token, cookieStr);
-                        if (signResult.status == 0)
-                        {
-                            var msg = string.Format(
-                                "Fly社区签到信息如下:<br>签到 {0},消息: {1}",
-                                signResult.status == 0 ? "成功" : "失败",
-                                signResult.msg);
+                    var msg = string.Format(
+                        "<br>签到 {0},消息: {1}",
+                        signResult.status == 0 ? "成功" : "失败",
+                        signResult.msg);
 
-                            msg += "<br> " + GetOrderStr();
-                            WriteLog(msg);
-                            SendEmail(msg);
-                        }
-                    }
-                    else // 2.2
-                    {
-                        var msg = "已经签到成功了,无需再签到!";
-                        WriteLog(msg);
-                    }
+                    msg += "<br> " + GetOrderStr();
+                    WriteLog(msg);
+                    SendEmail(msg);
+
                 }
+                else // 2.2
+                {
+                    var msg = "已经签到成功了,无需再签到!";
+                    WriteLog(msg);
+                }
+
             }
             else
             {
@@ -343,10 +345,10 @@ namespace Sky.FlySign.Core
         {
             var ipInfoList = new List<UserIpInfo>();
             var topResult = GetTopResult();
-            if(topResult.status == 0)
+            if (topResult.status == 0)
             {
                 var data = topResult.data;
-               
+
                 foreach (var item in data)
                 {
                     foreach (var u in item)
@@ -361,15 +363,15 @@ namespace Sky.FlySign.Core
                             ipInfoList.Add(new UserIpInfo { UserName = userName, IpAddress = ipAddress });
                         }
                     }
-                  
+
                 }
             }
             var sb = new StringBuilder();
             sb.Append("<br>");
             ipInfoList.ForEach(p =>
             {
-                sb.Append("用户名:"+ p.UserName + "&nbsp;&nbsp;&nbsp;&nbsp;");
-                sb.Append("Ip地址:" + p.IpAddress+ "&nbsp;&nbsp;&nbsp;&nbsp;");
+                sb.Append("用户名:" + p.UserName + "&nbsp;&nbsp;&nbsp;&nbsp;");
+                sb.Append("Ip地址:" + p.IpAddress + "&nbsp;&nbsp;&nbsp;&nbsp;");
                 sb.Append("<br>");
             });
 
@@ -673,7 +675,7 @@ namespace Sky.FlySign.Core
         /// <param name="strIp">需要解析的IP地址</param>  
         /// <param name="key">调用接口的key</param>  
         /// <returns></returns>  
-        public static string GetPosition(string strIp, string key= "237ccec56bac36ee4bc22740357655f3")
+        public static string GetPosition(string strIp, string key = "237ccec56bac36ee4bc22740357655f3")
         {
             var msg = string.Empty;
             var url = "http://restapi.amap.com/v3/ip?ip=" + strIp + "&key=" + key;

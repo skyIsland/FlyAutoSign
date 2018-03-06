@@ -12,7 +12,7 @@ namespace Sky.FlySign
        
         static void Main(string[] args)
         {           
-            //new Run();
+            new Run();
             Console.Title = "Fly社区自动签到!";
             Console.WriteLine("Service Working...");
 
@@ -21,9 +21,9 @@ namespace Sky.FlySign
             //o.GetIpStr();
 
 
-            var info = ConfigHelper.GetBasicConfig().FlyCfg;
-            var o = new FlySignIn(info.Email, info.Pwd);
-            o.StartSignIn();
+            //var info = ConfigHelper.GetBasicConfig().FlyCfg;
+            //var o = new FlySignIn(info.Email, info.Pwd);
+            //o.StartSignIn();
             Console.ReadKey();
         }
 

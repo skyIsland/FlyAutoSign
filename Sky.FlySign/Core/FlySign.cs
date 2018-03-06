@@ -53,7 +53,7 @@ namespace Sky.FlySign.Core
         /// <summary>
         /// token todo:获取token (sign/status 该链接可得到当前签到状态以及token信息(值)) 
         /// </summary>
-        private string _token { get; set; }
+        private string _token { get; set; } = "sssss";
 
         ///// <summary>
         ///// Cookie

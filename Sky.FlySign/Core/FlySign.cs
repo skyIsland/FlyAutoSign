@@ -53,7 +53,7 @@ namespace Sky.FlySign.Core
         /// <summary>
         /// token todo:获取token (sign/status 该链接可得到当前签到状态以及token信息(值)) 
         /// </summary>
-        private string _token { get; set; } = "sssss";
+        private string _token { get; set; }
 
         ///// <summary>
         ///// Cookie
@@ -278,6 +278,7 @@ namespace Sky.FlySign.Core
                     if (loginResult)
                     {
                         checkSignResult = CheckIsNeedSign();
+                        _token = checkSignResult.data.token;
                     }
                 }
 
@@ -288,12 +289,11 @@ namespace Sky.FlySign.Core
                 {
                     _isTrackCookies = false; // 关闭跟踪Cookie todo:需要了解清楚登录之后 Cookie是怎么返回到响应的
                     var cookieStr = GetCookieStr();
-                    var signResult = SignIn(_signUrl, _token, cookieStr);
+                    var signResult = SignIn(_signUrl, "token=" + _token, cookieStr);
 
                     var msg = string.Format(
-                        "<br>签到 {0},消息: {1}",
-                        signResult.status == 0 ? "成功" : "失败",
-                        signResult.msg);
+                        "<br>签到 {0}",
+                        signResult.status == 0 ? "成功" : "失败");
 
                     msg += "<br> " + GetOrderStr();
                     WriteLog(msg);
@@ -303,6 +303,7 @@ namespace Sky.FlySign.Core
                 else // 2.2
                 {
                     var msg = "已经签到成功了,无需再签到!";
+                    msg += "<br> " + GetOrderStr();
                     WriteLog(msg);
                 }
 
@@ -336,7 +337,11 @@ namespace Sky.FlySign.Core
             if (mySignInfo.Count > 0)
             {
                 var signInfo = mySignInfo.First();
-                msg = $"签到时间 {signInfo.time.ToString("yyyy-MM-dd HH:mm:ss")} 签到排名:{info.IndexOf(signInfo) + 1} 签到天数{signInfo.days}";
+                msg = $"签到时间 {signInfo.time:yyyy-MM-dd HH:mm:ss} 签到排名:{info.IndexOf(signInfo) + 1} 签到天数{signInfo.days}";
+            }
+            else
+            {
+                msg = "签到排名暂未进入前20!";
             }
             return msg;
         }

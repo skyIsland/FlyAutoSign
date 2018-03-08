@@ -328,9 +328,9 @@ namespace Sky.Core
             return resultObj;
         }
 
-        public static string GetOrderStr()
+        public string GetOrderStr()
         {
-            var topResult = new FlySignIn().GetTopResult();
+            var topResult = GetTopResult();
             var info = topResult.data[1].ToList();
             var mySignInfo = info.Where(p => p.uid == 2098488).ToList(); //todo:这里写死了
             var msg = string.Empty;

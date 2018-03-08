@@ -11,7 +11,7 @@ namespace Sky.FlySign.Job
     {
         public Task Execute(IJobExecutionContext context)
         {
-            FlySignIn.GetOrderStr();
+            new FlySignIn().GetIpStr();
 
             return Task.CompletedTask;
         }

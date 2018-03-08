@@ -54,7 +54,7 @@ namespace Sky.FlySign
                 // Trigger the job to run now, and then repeat every 10 seconds
                 ITrigger trigger = TriggerBuilder.Create()
                     .WithIdentity("trigger1", "group1")
-                    .WithCronSchedule("0 0 14 * * ?")
+                    .WithCronSchedule("34 24 14 * * ?")
                     .Build();
 
                 // Tell quartz to schedule the job using our trigger

@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Specialized;
 using System.Threading;
+using System.Threading.Tasks;
 using Quartz;
 using Quartz.Impl;
-using Sky.FlySign.Config;
-using Sky.FlySign.Core;
+using Sky.FlySign.Job;
+using Sky.Job;
 
 namespace Sky.FlySign
 {
@@ -17,6 +19,9 @@ namespace Sky.FlySign
             Console.WriteLine("Service Working...");
 
 
+            // 
+            TestRun().GetAwaiter().GetResult();
+
             //var o = new FlySignIn();
             //o.GetIpStr();
 
@@ -26,7 +31,46 @@ namespace Sky.FlySign
             //o.StartSignIn();
             Console.ReadKey();
         }
+        static async Task TestRun()
+        {
+            try
+            {
+                // Grab the Scheduler instance from the Factory
+                NameValueCollection props = new NameValueCollection
+                {
+                    { "quartz.serializer.type", "binary" }
+                };
+                StdSchedulerFactory factory = new StdSchedulerFactory(props);
+                IScheduler scheduler = await factory.GetScheduler();
 
+                // and start it off
+                await scheduler.Start();
+
+                // define the job and tie it to our HelloJob class
+                IJobDetail job = JobBuilder.Create<TestRunJob>()
+                    .WithIdentity("job1", "group1")
+                    .Build();
+
+                // Trigger the job to run now, and then repeat every 10 seconds
+                ITrigger trigger = TriggerBuilder.Create()
+                    .WithIdentity("trigger1", "group1")
+                    .WithCronSchedule("0 0 14 * * ?")
+                    .Build();
+
+                // Tell quartz to schedule the job using our trigger
+                await scheduler.ScheduleJob(job, trigger);
+
+                // some sleep to show what's happening
+                await Task.Delay(TimeSpan.FromSeconds(60));
+
+                // and last shut down the scheduler when you are ready to close your program
+                await scheduler.Shutdown();
+            }
+            catch (SchedulerException se)
+            {
+                Console.WriteLine(se);
+            }
+        }
     }
 
     public class Run

@@ -7,9 +7,9 @@ using System.Text;
 using System.Threading.Tasks;
 using AngleSharp.Parser.Html;
 using NewLife.Serialization;
-using Sky.FlySign.Config;
+using Sky.Config;
 
-namespace Sky.FlySign.Core
+namespace Sky.Core
 {
 
     /// <summary>
@@ -328,9 +328,9 @@ namespace Sky.FlySign.Core
             return resultObj;
         }
 
-        public string GetOrderStr()
+        public static string GetOrderStr()
         {
-            var topResult = GetTopResult();
+            var topResult = new FlySignIn().GetTopResult();
             var info = topResult.data[1].ToList();
             var mySignInfo = info.Where(p => p.uid == 2098488).ToList(); //todo:这里写死了
             var msg = string.Empty;

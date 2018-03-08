@@ -2,7 +2,7 @@
 using System.Net.Mail;
 using System.Threading.Tasks;
 
-namespace Sky.FlySign.Core
+namespace Sky.Core
 {
     /// <summary>
     /// 邮件处理 todo:有轮子 http://www.1234.sh/post/pomelo-extensions-smtp

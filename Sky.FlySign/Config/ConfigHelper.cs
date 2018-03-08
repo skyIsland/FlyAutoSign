@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 using NewLife.Serialization;
 
-namespace Sky.FlySign.Config
+namespace Sky.Config
 {
     /// <summary>
     /// 取出配置信息

@@ -1,4 +1,4 @@
-﻿namespace Sky.FlySign.Config
+﻿namespace Sky.Config
 {
     /// <summary>
     /// 配置信息

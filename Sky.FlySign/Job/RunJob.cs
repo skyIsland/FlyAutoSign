@@ -4,9 +4,10 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Quartz;
-using Sky.FlySign.Config;
+using Sky.Config;
+using Sky.Core;
 
-namespace Sky.FlySign.Core
+namespace Sky.Job
 {
     public class RunJob : IJob
     {

@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Quartz;
 using Quartz.Impl;
+using Sky.Core;
 using Sky.FlySign.Job;
 using Sky.Job;
 
@@ -29,6 +30,8 @@ namespace Sky.FlySign
             //var info = ConfigHelper.GetBasicConfig().FlyCfg;
             //var o = new FlySignIn(info.Email, info.Pwd);
             //o.StartSignIn();
+
+            //Test();
             Console.ReadKey();
         }
         static async Task TestRun()
@@ -70,6 +73,12 @@ namespace Sky.FlySign
             {
                 Console.WriteLine(se);
             }
+        }
+
+        static void Test()
+        {
+            var sign = new FlySignIn();
+            Console.WriteLine(sign.Login("",""));
         }
     }
 

@@ -100,7 +100,7 @@ namespace Sky.Core
         /// <param name="loginName"></param>
         /// <param name="loginPwd"></param>
         /// <returns></returns>
-        private bool Login(string loginName, string loginPwd)
+        public bool Login(string loginName, string loginPwd)
         {
             var isLoginSuccess = false;
             _isTrackCookies = true;
@@ -122,7 +122,7 @@ namespace Sky.Core
 
             // login
             var cookieStr = GetCookieStr();
-            var parameter = $"email={loginName}&pass={loginPwd}&vercode={answer}";
+            var parameter = $"loginName={loginName}&pass={loginPwd}&vercode={answer}";
             var response = DownloadString(_loginUrl, true, parameter, cookieStr).ToJsonEntity<Result>();
             if (response.status == 1)
             {

@@ -20,11 +20,12 @@ namespace Sky.FlySign
             Console.WriteLine("Service Working...");
 
 
-            // 
+            // 执行定时任务 GetIpStr
             TestRun().GetAwaiter().GetResult();
 
-            //var o = new FlySignIn();
-            //o.GetIpStr();
+            // 运行时先执行一次GetIpStr
+            var o = new FlySignIn();
+            o.GetIpStr();
 
 
             //var info = ConfigHelper.GetBasicConfig().FlyCfg;

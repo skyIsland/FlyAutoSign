@@ -52,13 +52,13 @@ namespace Sky.FlySign
             //DateTimeOffset runTime = DateBuilder.EvenMinuteDate(DateTimeOffset.UtcNow);
             ITrigger trigger = TriggerBuilder.Create()
                 .WithIdentity("trigger1", "group1")
-                .WithCronSchedule("58 59 23 * * ?")     //凌晨23:59:58触发 58 59 23 * * ? 0/5 * * * * ? .StartAt(runTime)
+                .WithCronSchedule("14 13 2 * * ?")     //凌晨23:59:58触发 58 59 23 * * ? 0/5 * * * * ? .StartAt(runTime)
                 .Build();
             // 再来一个触发器
             var triggerByIp = TriggerBuilder
                         .Create()
                         .WithIdentity("trigger2", "group1")
-                        .WithCronSchedule("0 02 18 * * ?").Build();
+                        .WithCronSchedule("0 58 13 * * ?").Build();
 
             // 将任务与触发器添加到调度器中
             scheduler.Result.ScheduleJob(job, trigger);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 using AngleSharp.Parser.Html;
@@ -71,6 +72,7 @@ namespace Sky.Core
         private Dictionary<string, Cookie> _cookiesDic = new Dictionary<string, Cookie>();
 
         private string _logPath = @"\Log";
+        private List<WebProxy> ProxyList;
         #endregion
 
         #region 构造函数
@@ -88,6 +90,15 @@ namespace Sky.Core
         {
             this._loginName = loginName;
             this._loginPwd = loginPwd;
+            ProxyList = new List<WebProxy>
+            {
+                new WebProxy("183.159.80.92",18118),
+                new WebProxy("118.190.95.35",9001),
+                new WebProxy("118.190.95.26",9001),
+                new WebProxy("122.114.31.177",808),
+                new WebProxy("221.199.195.129",45850),
+                new WebProxy("115.198.34.196",6666)
+            };
         }
 
         #endregion
@@ -398,9 +409,6 @@ namespace Sky.Core
         {
             string resultStr = "";
             var request = (HttpWebRequest)WebRequest.Create(url);
-
-
-
             // cookie 
             if (!string.IsNullOrWhiteSpace(cookieData))
             {
@@ -409,7 +417,18 @@ namespace Sky.Core
             request.Referer = "http://fly.layui.com/";
             request.UserAgent =
                 "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36";
-
+            // 处理代理
+            WebProxy proxy = null;
+            foreach (var item in ProxyList)
+            {
+                var isUsefulProxy = CheckProxyIsUseful(item);
+                if (isUsefulProxy)
+                {
+                    proxy = item;
+                    break;
+                }
+            }
+            if (proxy != null) request.Proxy = proxy;
             // post数据相关
             if (isPost)
             {
@@ -510,6 +529,33 @@ namespace Sky.Core
             }
             return sb.ToString();
 
+        }
+
+        private bool CheckProxyIsUseful(WebProxy proxy)
+        {
+            var result = false;
+            try
+            {
+                var req = WebRequest.Create("https://www.baidu.com") as HttpWebRequest;
+                req.Proxy = proxy; //设置代理
+                req.Timeout = 5000;   //超时
+                var response = (HttpWebResponse)req.GetResponse();
+                Encoding bin = Encoding.GetEncoding("UTF-8");
+                StreamReader sr = new StreamReader(response.GetResponseStream(), bin);
+                string str = sr.ReadToEnd();
+                if (str.Contains("百度一下"))
+                {
+                    result = true;
+                    sr.Close();
+                    sr.Dispose();
+                }
+            }
+            catch (Exception ex)
+            {
+              WriteLog("检测代理连接连接失败，原因："+ ex.Message);
+            }
+           
+            return result;
         }
         #endregion
 
